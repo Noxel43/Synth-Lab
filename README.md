@@ -2,7 +2,7 @@ synth lab.
 a playground for making music.
 it's fun.
 
-Here[https://noxel43.github.io/Synth-Lab/] is the pages link
+[Here](https://noxel43.github.io/Synth-Lab/) is the pages link
 https://noxel43.github.io/Synth-Lab/
 
 # Synth Lab features:
