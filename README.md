@@ -17,11 +17,15 @@ https://noxel43.github.io/Synth-Lab/
 - Drone
 - Bubble synth
 - XY Pad
+- Physics platform + ball sound maker
 
 - Exporting
 - Recording and Playback
 
 All of them are pretty simple in functionality, however, this is definetly not for creating proffesional music, it's for having fun.
 This is v0.1
+
+# Current bugs:
+- May not create sound on mobile platforms
 
 Made by me with Claude Sonnet 4.6 Max effort adaptive
