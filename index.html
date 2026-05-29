@@ -241,6 +241,18 @@ input.vr::-webkit-slider-thumb{-webkit-appearance:none;width:11px;height:11px;ba
 .arp-key.on{border-color:var(--or);background:rgba(255,128,32,.1);box-shadow:0 0 8px rgba(255,128,32,.3)}
 .arp-key.playing{background:var(--or);color:#000;border-color:var(--or);box-shadow:0 0 12px var(--or)}
 .arp-disp{font-family:'Orbitron',sans-serif;font-size:11px;color:var(--or);text-shadow:0 0 8px var(--or);min-width:80px}
+
+/* ═══════════════════ PHYSICS MARBLE MACHINE ═══════════════════ */
+#physics{--tc:var(--tl)}
+#physCanvas{width:100%;height:500px;border:1px solid var(--bd);border-radius:5px;background:#020810;display:block;cursor:crosshair;touch-action:none}
+.pm-btn.on{background:rgba(0,255,204,.12);border-color:var(--tl);color:var(--tl);box-shadow:0 0 8px rgba(0,255,204,.2)}
+.pm-btn{font-family:'Orbitron',sans-serif;font-size:8px;font-weight:700;letter-spacing:1.2px;padding:6px 11px;
+  background:transparent;border:1px solid var(--bd);color:var(--dm);cursor:pointer;border-radius:3px;transition:all .15s;white-space:nowrap}
+.pm-btn:hover{border-color:var(--dm);color:var(--tx)}
+.phys-info{font-size:8px;color:var(--dm);letter-spacing:1px;margin-bottom:8px;min-height:14px;transition:color .2s}
+.phys-legend{display:flex;gap:14px;font-size:8px;color:var(--dm);letter-spacing:.8px;margin-top:5px;flex-wrap:wrap}
+.phys-legend span{display:flex;align-items:center;gap:4px}
+.phys-legend span::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--tl);display:inline-block}
 </style>
 </head>
 <body>
@@ -274,6 +286,7 @@ input.vr::-webkit-slider-thumb{-webkit-appearance:none;width:11px;height:11px;ba
   <button class="nb" data-p="drone">🌊 DRONE</button>
   <button class="nb" data-p="bubbles">🫧 BUBBLE SYNTH</button>
   <button class="nb" data-p="xypad">✛ XY PAD</button>
+  <button class="nb" data-p="physics">🎱 MARBLE MACHINE</button>
 </nav>
 
 <div class="ta">
@@ -518,6 +531,52 @@ input.vr::-webkit-slider-thumb{-webkit-appearance:none;width:11px;height:11px;ba
   </div>
   <canvas id="xyCvs"></canvas>
   <div class="xybot"><span>← LOW PITCH</span><span>↑ BRIGHT   ↓ WARM</span><span>HIGH PITCH →</span></div>
+</div>
+
+<!-- ══ PHYSICS MARBLE MACHINE ══ -->
+<div id="physics" class="panel">
+  <div class="pt"><div class="dot"></div>MARBLE MACHINE</div>
+  <div class="ps">DRAW PLATFORMS · LAUNCH BALLS · COLLISIONS PLAY NOTES — MUSICAL RUBE GOLDBERG</div>
+  <div class="row mb" style="gap:8px;flex-wrap:wrap">
+    <div class="col" style="gap:4px">
+      <div class="lbl">MODE</div>
+      <div class="row" style="gap:4px">
+        <button class="pm-btn on" id="pmDraw" data-mode="draw">✏ DRAW</button>
+        <button class="pm-btn" id="pmLaunch" data-mode="launch">🎱 LAUNCH</button>
+        <button class="pm-btn" id="pmErase" data-mode="erase">✕ ERASE</button>
+      </div>
+    </div>
+    <div class="col" style="gap:5px"><div class="lbl">SCALE</div>
+      <select class="sel" id="physScale"><option value="pentatonic">PENTATONIC</option><option value="major">MAJOR</option><option value="minor">MINOR</option><option value="blues">BLUES</option><option value="chromatic">CHROMATIC</option></select>
+    </div>
+    <div class="col" style="gap:5px"><div class="lbl">ROOT</div>
+      <select class="sel" id="physRoot"><option>C</option><option>C#</option><option>D</option><option>D#</option><option>E</option><option>F</option><option>F#</option><option>G</option><option>G#</option><option>A</option><option>A#</option><option>B</option></select>
+    </div>
+    <div class="scol" style="min-width:130px">
+      <label>GRAVITY</label>
+      <input type="range" class="sl" id="physGrav" min="0.05" max="5" step="0.05" value="1.8" style="width:120px">
+      <span class="sv" id="physGravV">1.8</span>
+    </div>
+    <div class="scol"><label>BOUNCE</label><input type="range" class="sl" id="physBounce" min="0" max="0.98" step="0.02" value="0.65" style="width:80px"><span class="sv" id="physBounceV">0.65</span></div>
+    <div class="scol"><label>REVERB</label><input type="range" class="sl" id="physRev" min="0" max="100" value="35" style="width:70px"></div>
+    <div class="col" style="gap:4px"><div class="lbl">AUTO LAUNCH</div>
+      <div class="row" style="gap:6px">
+        <button class="pm-btn" id="physAuto" style="padding:5px 9px">OFF</button>
+        <div class="scol"><label>RATE</label><input type="range" class="sl" id="physRate" min="0.3" max="6" step="0.1" value="1.5" style="width:55px"></div>
+      </div>
+    </div>
+    <button class="btn" id="physPreset" style="--tc:var(--tl);align-self:flex-end">PRESET MAP</button>
+    <button class="btn" id="physClrBalls" style="--tc:var(--or);align-self:flex-end">CLR BALLS</button>
+    <button class="btn" id="physClrAll" style="--tc:var(--re);align-self:flex-end">CLR ALL</button>
+  </div>
+  <div class="phys-info" id="physHint">✏ DRAW — DRAG TO PLACE A PLATFORM · CLICK EXISTING PLATFORM TO CYCLE NOTE</div>
+  <canvas id="physCanvas"></canvas>
+  <div class="phys-legend">
+    <span style="--tl:#ff2d78">DRAW: drag to place · click to change note</span>
+    <span style="--tl:#00e5ff">LAUNCH: drag to aim + power · release to fire</span>
+    <span style="--tl:#ff8020">ERASE: click platform to remove</span>
+    <span style="--tl:#ffe600">Balls removed after 30 bounces or leaving canvas</span>
+  </div>
 </div>
 
 </div><!-- ta -->
@@ -957,8 +1016,396 @@ document.querySelectorAll('.nb').forEach(btn=>{
 })();
 
 // ══════════════════════════════════════════
-// RECORDING SYSTEM
+// PHYSICS MARBLE MACHINE
 // ══════════════════════════════════════════
+(function(){
+  const C=document.getElementById('physCanvas');
+  const X=C.getContext('2d');
+  let engine=null,world=null,physInited=false,physLoading=false;
+  let mode='draw';
+  let platforms=[];  // {body, noteIdx, midi, hue, flash, lx1,ly1,lx2,ly2}
+  let balls=[];       // {body, hue, trail[], bounces, born}
+  let drawing=false,drawStart=null,mPos={x:0,y:0};
+  let launching=false,launchStart=null;
+  let autoOn=false,autoInt=null;
+  let dry=null,wet=null;
+  const platCD=new Map(); // body.id → lastHit timestamp
+
+  const HINTS={
+    draw:'✏ DRAW — DRAG TO PLACE PLATFORM · CLICK EXISTING PLATFORM TO CYCLE NOTE',
+    launch:'🎱 LAUNCH — DRAG FROM ANY POINT TO AIM · RELEASE TO FIRE · DRAG LENGTH = POWER',
+    erase:'✕ ERASE — CLICK ANY PLATFORM TO REMOVE IT'
+  };
+  const NOTE_HUES=[340,20,55,110,185,215,270,0,175,340,55,110];
+
+  // ── HELPERS ──
+  function scaleMidis(){
+    const sc=SCALES[document.getElementById('physScale').value||'pentatonic'];
+    const r=NOTES.indexOf(document.getElementById('physRoot').value||'C');
+    const notes=[];
+    for(let oct=3;oct<=6;oct++) sc.forEach(i=>notes.push((oct+1)*12+(r+i)%12));
+    return notes;
+  }
+  function noteColor(idx){return NOTE_HUES[idx%NOTE_HUES.length];}
+
+  function ensureFX(){
+    if(dry)return; const ac=getAC();
+    dry=ac.createGain();dry.gain.value=.5;dry.connect(mGain);
+    wet=ac.createGain();wet.gain.value=.3;wet.connect(gRev);
+  }
+
+  function playHit(midi,vel){
+    ensureFX(); const ac=getAC();
+    wet.gain.value=+document.getElementById('physRev').value/100*.55;
+    const vol=Math.min(1,vel/12)*.55+.12;
+    const f=midiFreq(midi);
+    const now=ac.currentTime;
+    // Marimba-style: sine fundamental + triangle octave, quick decay
+    [f,f*2.76].forEach((fr,i)=>{
+      const o=ac.createOscillator(),g=ac.createGain();
+      o.type=i===0?'sine':'triangle'; o.frequency.value=fr;
+      const vol2=i===0?vol:vol*.25;
+      g.gain.setValueAtTime(vol2,now);
+      g.gain.exponentialRampToValueAtTime(.001,now+(i===0?.95:.18));
+      o.connect(g);g.connect(dry);if(i===0)g.connect(wet);
+      o.start(now);o.stop(now+(i===0?1:.25));
+    });
+  }
+
+  // ── INIT MATTER.JS ──
+  function initPhysics(){
+    if(physInited||!window.Matter)return;
+    const {Engine,World,Events}=Matter;
+    engine=Engine.create(); world=engine.world;
+    engine.gravity.y=+document.getElementById('physGrav').value;
+    Events.on(engine,'collisionStart',ev=>{
+      ev.pairs.forEach(pair=>{
+        const isABall=pair.bodyA.label==='ball';
+        const isBBall=pair.bodyB.label==='ball';
+        const ball=isABall?pair.bodyA:isBBall?pair.bodyB:null;
+        const plat=pair.bodyA.label==='platform'?pair.bodyA:pair.bodyB.label==='platform'?pair.bodyB:null;
+        if(!ball||!plat)return;
+        const now=Date.now();
+        if(now-(platCD.get(plat.id)||0)<80)return;
+        platCD.set(plat.id,now);
+        const pd=platforms.find(p=>p.body===plat);
+        if(pd){
+          const vel=Math.hypot(ball.velocity.x,ball.velocity.y);
+          if(vel<0.5)return;
+          playHit(pd.midi,vel);
+          pd.flash=1;
+        }
+        const bd=balls.find(b=>b.body===ball);
+        if(bd){bd.bounces++;if(bd.bounces>30)killBall(bd);}
+      });
+    });
+    physInited=true;
+    physLoop();
+  }
+
+  function lazyLoad(cb){
+    if(physLoading)return;
+    if(window.Matter){initPhysics();if(cb)cb();return;}
+    physLoading=true;
+    const s=document.createElement('script');
+    s.src='https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js';
+    s.onload=()=>{initPhysics();if(cb)cb();};
+    s.onerror=()=>{physLoading=false;document.getElementById('physHint').textContent='⚠ FAILED TO LOAD MATTER.JS — CHECK INTERNET CONNECTION';};
+    document.head.appendChild(s);
+  }
+
+  // ── PLATFORM ──
+  function addPlatform(x1,y1,x2,y2,noteIdx){
+    if(!physInited)return;
+    const len=Math.hypot(x2-x1,y2-y1); if(len<12)return;
+    const mx=(x1+x2)/2,my=(y1+y2)/2,ang=Math.atan2(y2-y1,x2-x1);
+    const body=Matter.Bodies.rectangle(mx,my,len,11,{
+      isStatic:true,label:'platform',
+      restitution:+document.getElementById('physBounce').value,
+      friction:0.005,frictionStatic:0,angle:ang
+    });
+    Matter.World.add(world,body);
+    const notes=scaleMidis();
+    const ni=noteIdx!==undefined?noteIdx%notes.length:Math.floor(Math.random()*Math.min(notes.length,8));
+    platforms.push({body,noteIdx:ni,midi:notes[ni],hue:noteColor(ni),flash:0,lx1:x1,ly1:y1,lx2:x2,ly2:y2});
+  }
+
+  function addBall(x,y,vx,vy){
+    if(!physInited)return;
+    const body=Matter.Bodies.circle(x,y,7,{
+      label:'ball',restitution:+document.getElementById('physBounce').value,
+      friction:0.001,frictionAir:0.0008,frictionStatic:0,density:.0015
+    });
+    Matter.Body.setVelocity(body,{x:vx,y:vy});
+    Matter.World.add(world,body);
+    balls.push({body,hue:Math.random()*360,trail:[],bounces:0,born:Date.now()});
+  }
+
+  function killBall(bd){
+    try{Matter.World.remove(world,bd.body);}catch(e){}
+    balls=balls.filter(b=>b!==bd);
+  }
+
+  function findPlatAt(x,y){
+    for(const p of platforms){
+      // Polygon test
+      const v=p.body.vertices; let inside=false;
+      for(let i=0,j=v.length-1;i<v.length;j=i++){
+        if(((v[i].y>y)!==(v[j].y>y))&&(x<(v[j].x-v[i].x)*(y-v[i].y)/(v[j].y-v[i].y)+v[i].x))inside=!inside;
+      }
+      if(inside)return p;
+      // Proximity to centerline (for thin hits)
+      const{lx1:x1,ly1:y1,lx2:x2,ly2:y2}=p;
+      const t=Math.max(0,Math.min(1,((x-x1)*(x2-x1)+(y-y1)*(y2-y1))/((x2-x1)**2+(y2-y1)**2||1)));
+      if(Math.hypot(x-(x1+t*(x2-x1)),y-(y1+t*(y2-y1)))<13)return p;
+    }
+    return null;
+  }
+
+  // ── RENDER LOOP ──
+  function physLoop(){
+    requestAnimationFrame(physLoop);
+    const w=C.width=C.offsetWidth,h=C.height=C.offsetHeight;
+    if(!physInited){
+      X.fillStyle='#020810';X.fillRect(0,0,w,h);
+      X.fillStyle='rgba(0,255,204,.15)';X.font='11px Orbitron,monospace';X.textAlign='center';
+      X.fillText('CLICK CANVAS TO INITIALISE',w/2,h/2);
+      return;
+    }
+    // Update gravity live
+    engine.gravity.y=+document.getElementById('physGrav').value;
+    Matter.Engine.update(engine,1000/60);
+
+    // Cull out-of-bounds balls
+    balls=balls.filter(b=>{
+      if(b.body.position.y>h+120||b.body.position.x<-250||b.body.position.x>w+250||Date.now()-b.born>45000){
+        try{Matter.World.remove(world,b.body);}catch(e){}
+        return false;
+      }return true;
+    });
+
+    // ── BACKGROUND ──
+    X.fillStyle='rgba(2,8,16,.28)'; X.fillRect(0,0,w,h);
+    X.strokeStyle='rgba(0,255,204,.025)';X.lineWidth=1;
+    for(let xi=0;xi<=w;xi+=60){X.beginPath();X.moveTo(xi,0);X.lineTo(xi,h);X.stroke();}
+    for(let yi=0;yi<=h;yi+=60){X.beginPath();X.moveTo(0,yi);X.lineTo(w,yi);X.stroke();}
+
+    // ── PLATFORMS ──
+    platforms.forEach(p=>{
+      const v=p.body.vertices;
+      const grd=`hsl(${p.hue},90%,60%)`;
+      X.beginPath();X.moveTo(v[0].x,v[0].y);v.forEach(vt=>X.lineTo(vt.x,vt.y));X.closePath();
+      X.fillStyle=p.flash>0.7?'rgba(255,255,255,.9)':`hsla(${p.hue},90%,60%,.7)`;
+      X.fill();
+      X.strokeStyle=grd; X.lineWidth=p.flash>0?2.5:1.5;
+      X.shadowBlur=p.flash>0?22:6; X.shadowColor=grd;
+      X.stroke(); X.shadowBlur=0;
+      // Note label
+      const lx=(p.lx1+p.lx2)/2,ly=(p.ly1+p.ly2)/2;
+      X.fillStyle=`hsla(${p.hue},100%,85%,${0.6+p.flash*.4})`;
+      X.font='8px Share Tech Mono'; X.textAlign='center'; X.textBaseline='bottom';
+      X.fillText(NOTES[p.midi%12]+(Math.floor(p.midi/12)-1),lx,ly-8);
+      X.textBaseline='alphabetic';
+      if(p.flash>0)p.flash=Math.max(0,p.flash-0.065);
+    });
+
+    // ── BALLS ──
+    balls.forEach(b=>{
+      const pos=b.body.position;
+      b.trail.push({x:pos.x,y:pos.y});
+      if(b.trail.length>20)b.trail.shift();
+      b.trail.forEach((pt,i)=>{
+        const a=(i/b.trail.length)*.5;
+        const r=2.5*(i/b.trail.length);
+        X.beginPath();X.arc(pt.x,pt.y,r,0,Math.PI*2);
+        X.fillStyle=`hsla(${b.hue},90%,65%,${a})`;X.fill();
+      });
+      // Ball glow
+      const gr=X.createRadialGradient(pos.x,pos.y,0,pos.x,pos.y,14);
+      gr.addColorStop(0,'rgba(255,255,255,.95)');
+      gr.addColorStop(0.4,`hsla(${b.hue},90%,65%,.85)`);
+      gr.addColorStop(1,`hsla(${b.hue},90%,65%,0)`);
+      X.beginPath();X.arc(pos.x,pos.y,7,0,Math.PI*2);X.fillStyle=gr;X.fill();
+      X.beginPath();X.arc(pos.x,pos.y,7,0,Math.PI*2);
+      X.strokeStyle=`hsl(${b.hue},90%,65%)`;X.lineWidth=1;
+      X.shadowBlur=8;X.shadowColor=`hsl(${b.hue},90%,65%)`;X.stroke();X.shadowBlur=0;
+    });
+
+    // ── DRAW PREVIEW ──
+    if(drawing&&drawStart){
+      X.strokeStyle='rgba(0,255,204,.55)'; X.lineWidth=3; X.setLineDash([5,5]);
+      X.shadowBlur=8; X.shadowColor='#00ffcc';
+      X.beginPath();X.moveTo(drawStart.x,drawStart.y);X.lineTo(mPos.x,mPos.y);X.stroke();
+      X.setLineDash([]); X.shadowBlur=0;
+      // Endpoint dots
+      [drawStart,mPos].forEach(pt=>{
+        X.beginPath();X.arc(pt.x,pt.y,4,0,Math.PI*2);
+        X.fillStyle='rgba(0,255,204,.7)';X.fill();
+      });
+      const len=Math.hypot(mPos.x-drawStart.x,mPos.y-drawStart.y);
+      X.fillStyle='rgba(0,255,204,.6)';X.font='9px Share Tech Mono';X.textAlign='center';
+      X.fillText(Math.round(len)+'px',mPos.x,mPos.y-12);
+    }
+
+    // ── LAUNCH AIM ──
+    if(launching&&launchStart){
+      const dx=mPos.x-launchStart.x,dy=mPos.y-launchStart.y;
+      const len=Math.hypot(dx,dy);const ang=Math.atan2(dy,dx);const pwr=Math.min(len,160)/160;
+      // Aim arrow (opposite direction)
+      const ex=launchStart.x-Math.cos(ang)*len*.8,ey=launchStart.y-Math.sin(ang)*len*.8;
+      X.strokeStyle=`rgba(0,229,255,${.4+pwr*.5})`;X.lineWidth=2;X.setLineDash([5,5]);
+      X.beginPath();X.moveTo(launchStart.x,launchStart.y);X.lineTo(ex,ey);X.stroke();X.setLineDash([]);
+      // Arrowhead
+      const ah=10,aa=0.4;
+      [ang-Math.PI+aa,ang-Math.PI-aa].forEach(a=>{
+        X.beginPath();X.moveTo(ex,ey);X.lineTo(ex+Math.cos(a)*ah,ey+Math.sin(a)*ah);
+        X.strokeStyle=`rgba(0,229,255,.8)`;X.lineWidth=2;X.stroke();
+      });
+      // Power ring
+      X.beginPath();X.arc(launchStart.x,launchStart.y,10+pwr*20,0,Math.PI*2);
+      X.strokeStyle=`rgba(0,229,255,${pwr*.6})`;X.lineWidth=1.5;X.stroke();
+      // Crosshair
+      for(let a=0;a<4;a++){
+        const av=a*Math.PI/2;
+        X.beginPath();X.moveTo(launchStart.x+Math.cos(av)*10,launchStart.y+Math.sin(av)*10);
+        X.lineTo(launchStart.x+Math.cos(av)*18,launchStart.y+Math.sin(av)*18);
+        X.strokeStyle='rgba(0,229,255,.7)';X.lineWidth=1.5;X.stroke();
+      }
+      const velLabel=(pwr*18).toFixed(1);
+      X.fillStyle='rgba(0,229,255,.7)';X.font='9px Share Tech Mono';X.textAlign='center';
+      X.fillText('v='+velLabel,launchStart.x,launchStart.y-22);
+    }
+  }
+  // Start render loop immediately (shows placeholder until Matter loads)
+  physLoop();
+
+  // ── POINTER EVENTS ──
+  function getXY(e){const r=C.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top};}
+
+  C.addEventListener('pointerdown',e=>{
+    e.preventDefault(); getAC();
+    if(!physInited){lazyLoad(()=>handleDown(e));return;}
+    handleDown(e);
+  });
+
+  function handleDown(e){
+    if(!physInited)return;
+    const{x,y}=getXY(e); C.setPointerCapture(e.pointerId);
+    if(mode==='draw'){
+      const hit=findPlatAt(x,y);
+      if(hit){
+        const notes=scaleMidis();
+        hit.noteIdx=(hit.noteIdx+1)%Math.min(notes.length,12);
+        hit.midi=notes[hit.noteIdx]; hit.hue=noteColor(hit.noteIdx); hit.flash=1;
+        playHit(hit.midi,8);
+      }else{drawing=true;drawStart={x,y};mPos={x,y};}
+    }else if(mode==='launch'){
+      launching=true; launchStart={x,y}; mPos={x,y};
+    }else if(mode==='erase'){
+      const hit=findPlatAt(x,y);
+      if(hit){try{Matter.World.remove(world,hit.body);}catch(e){}platforms=platforms.filter(p=>p!==hit);}
+    }
+  }
+
+  C.addEventListener('pointermove',e=>{const{x,y}=getXY(e);mPos={x,y};});
+
+  C.addEventListener('pointerup',e=>{
+    const{x,y}=getXY(e);
+    if(mode==='draw'&&drawing){
+      drawing=false;
+      if(Math.hypot(x-drawStart.x,y-drawStart.y)>12)addPlatform(drawStart.x,drawStart.y,x,y);
+      drawStart=null;
+    }else if(mode==='launch'&&launching){
+      launching=false;
+      const dx=x-launchStart.x,dy=y-launchStart.y,len=Math.hypot(dx,dy);
+      const ang=Math.atan2(dy,dx),pwr=Math.min(len,160)/160*18;
+      if(len>5){
+        addBall(launchStart.x,launchStart.y,-Math.cos(ang)*pwr,-Math.sin(ang)*pwr);
+      }else{
+        addBall(x,y,(Math.random()-.5)*4,8+Math.random()*4);
+      }
+      launchStart=null;
+    }
+    drawing=false; launching=false;
+  });
+  C.addEventListener('pointercancel',()=>{drawing=false;launching=false;drawStart=null;launchStart=null;});
+
+  // ── CONTROLS ──
+  document.querySelectorAll('.pm-btn[data-mode]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      mode=btn.dataset.mode;
+      document.querySelectorAll('.pm-btn[data-mode]').forEach(b=>b.classList.remove('on'));
+      btn.classList.add('on');
+      document.getElementById('physHint').textContent=HINTS[mode];
+    });
+  });
+
+  document.getElementById('physGrav').addEventListener('input',function(){
+    if(engine)engine.gravity.y=+this.value;
+    document.getElementById('physGravV').textContent=(+this.value).toFixed(2);
+  });
+  document.getElementById('physBounce').addEventListener('input',function(){
+    document.getElementById('physBounceV').textContent=(+this.value).toFixed(2);
+  });
+
+  document.getElementById('physClrBalls').addEventListener('click',()=>{
+    if(!physInited)return;
+    balls.forEach(b=>{try{Matter.World.remove(world,b.body);}catch(e){}});balls=[];
+  });
+  document.getElementById('physClrAll').addEventListener('click',()=>{
+    if(!physInited)return;
+    balls.forEach(b=>{try{Matter.World.remove(world,b.body);}catch(e){}});balls=[];
+    platforms.forEach(p=>{try{Matter.World.remove(world,p.body);}catch(e){}});platforms=[];
+  });
+
+  // Auto-launch
+  document.getElementById('physAuto').addEventListener('click',()=>{
+    if(!physInited){lazyLoad(()=>document.getElementById('physAuto').click());return;}
+    autoOn=!autoOn;
+    const btn=document.getElementById('physAuto');
+    btn.textContent=autoOn?'ON':'OFF'; btn.classList.toggle('on',autoOn);
+    clearInterval(autoInt);
+    if(autoOn){
+      const doAuto=()=>{
+        const w=C.width,rate=+document.getElementById('physRate').value;
+        // Scatter launch from top
+        addBall(Math.random()*w*0.8+w*0.1,Math.random()*40,(Math.random()-.5)*5,4+Math.random()*5);
+        clearInterval(autoInt);
+        if(autoOn)autoInt=setTimeout(doAuto,(1000/rate));
+      };
+      doAuto();
+    }
+  });
+
+  // Preset layout
+  function buildPreset(){
+    document.getElementById('physClrAll').click();
+    setTimeout(()=>{
+      if(!physInited)return;
+      const w=C.offsetWidth||900,h=C.offsetHeight||500;
+      const notes=scaleMidis().slice(0,8);
+      const plats=[
+        [.08,.15,.42,.24],[.58,.10,.92,.20],[.20,.35,.52,.44],
+        [.48,.28,.78,.38],[.05,.55,.38,.63],[.62,.50,.94,.58],
+        [.28,.70,.60,.77],[.70,.68,.96,.76],[.15,.86,.50,.90],
+        [.52,.84,.88,.89]
+      ];
+      plats.forEach(([x1r,y1r,x2r,y2r],i)=>{
+        addPlatform(x1r*w,y1r*h,x2r*w,y2r*h,i%notes.length);
+      });
+    },60);
+  }
+  document.getElementById('physPreset').addEventListener('click',()=>{
+    if(!physInited){lazyLoad(buildPreset);}else{buildPreset();}
+  });
+
+  // Open physics panel → lazy load + build preset
+  document.querySelector('.nb[data-p="physics"]')?.addEventListener('click',()=>{
+    if(!physInited&&!physLoading)lazyLoad(()=>setTimeout(buildPreset,200));
+    else if(physInited&&platforms.length===0)setTimeout(buildPreset,200);
+  });
+})();
+
 (function(){
   window.SL=window.SL||{};
   let recDest=null,recorder=null,chunks=[],isRec=false,recStart=0,timerInt=null;
